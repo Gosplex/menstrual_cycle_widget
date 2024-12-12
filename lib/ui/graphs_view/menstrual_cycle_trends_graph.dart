@@ -25,6 +25,7 @@ class MenstrualCycleTrendsGraph extends StatefulWidget {
   final Color themeColor;
   final Function? onImageDownloadCallback;
   final Function? onPdfDownloadCallback;
+  final EdgeInsetsGeometry? headerPadding;
 
   const MenstrualCycleTrendsGraph(
       {super.key,
@@ -49,7 +50,9 @@ class MenstrualCycleTrendsGraph extends StatefulWidget {
       this.normalRangeHintTitle = Strings.graphCycleNormalDays,
       this.themeColor = Colors.black,
       this.onImageDownloadCallback,
-      this.onPdfDownloadCallback});
+      this.onPdfDownloadCallback,
+      this.headerPadding =
+          const EdgeInsets.symmetric(vertical: 8, horizontal: 16)});
 
   @override
   State<MenstrualCycleTrendsGraph> createState() =>
@@ -184,85 +187,101 @@ class _MenstrualCycleTrendsGraphState extends State<MenstrualCycleTrendsGraph> {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: (isGetData)
-              ? const Text(Strings.noDataFound)
-              : Text(widget.loadingText),
+          child: (isGetData) ? SizedBox.shrink() : Text(widget.loadingText),
         ),
       );
     }
   }
 
   /// Returns the cycle trends  chart.
-  SfCartesianChart _buildCycleTrendsChart() {
-    return SfCartesianChart(
-      key: _chartKey,
-      plotAreaBorderWidth: 0,
-      zoomPanBehavior: _zoomPanBehavior,
-      onZooming: (ZoomPanArgs args) {},
-      onActualRangeChanged: (ActualRangeChangedArgs args) {
-        if (args.orientation == AxisOrientation.horizontal) {
-          if (isLoadMoreView) {
-            args.visibleMin = oldAxisVisibleMin;
-            args.visibleMax = oldAxisVisibleMax;
-          }
-          oldAxisVisibleMin = args.visibleMin as num;
-          oldAxisVisibleMax = args.visibleMax as num;
-          isLoadMoreView = false;
-        }
-      },
-      enableAxisAnimation: true,
-      legend: Legend(
-          isVisible: widget.isShowHeader,
-          textStyle: widget.headerTitleTextStyle),
-      primaryXAxis: CategoryAxis(
-        majorGridLines: const MajorGridLines(width: 0),
-        // labelRotation: -70,
-        rangePadding: ChartRangePadding.normal,
-        labelStyle: widget.xAxisTitleTextStyle,
-        title: (widget.isShowXAxisTitle)
-            ? AxisTitle(
-                text: widget.xAxisTitle,
-                textStyle: widget.xAxisTitleTextStyle,
-              )
-            : const AxisTitle(
-                text: "",
+  Widget _buildCycleTrendsChart() {
+    return Container(
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(10)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: widget.headerPadding!,
+            child: Text(
+              widget.headerTitle,
+              style: widget.headerTitleTextStyle,
+            ),
+          ),
+          Flexible(
+            child: SfCartesianChart(
+              key: _chartKey,
+              plotAreaBorderWidth: 0,
+              zoomPanBehavior: _zoomPanBehavior,
+              onZooming: (ZoomPanArgs args) {},
+              onActualRangeChanged: (ActualRangeChangedArgs args) {
+                if (args.orientation == AxisOrientation.horizontal) {
+                  if (isLoadMoreView) {
+                    args.visibleMin = oldAxisVisibleMin;
+                    args.visibleMax = oldAxisVisibleMax;
+                  }
+                  oldAxisVisibleMin = args.visibleMin as num;
+                  oldAxisVisibleMax = args.visibleMax as num;
+                  isLoadMoreView = false;
+                }
+              },
+              enableAxisAnimation: true,
+              legend: Legend(
+                  isVisible: widget.isShowHeader,
+                  textStyle: widget.headerTitleTextStyle),
+              primaryXAxis: CategoryAxis(
+                majorGridLines: const MajorGridLines(width: 0),
+                // labelRotation: -70,
+                rangePadding: ChartRangePadding.normal,
+                labelStyle: widget.xAxisTitleTextStyle,
+                title: (widget.isShowXAxisTitle)
+                    ? AxisTitle(
+                        text: widget.xAxisTitle,
+                        textStyle: widget.xAxisTitleTextStyle,
+                      )
+                    : const AxisTitle(
+                        text: "",
+                      ),
+                labelPlacement: LabelPlacement.onTicks,
+                edgeLabelPlacement: EdgeLabelPlacement.shift,
               ),
-        labelPlacement: LabelPlacement.onTicks,
-        edgeLabelPlacement: EdgeLabelPlacement.shift,
-      ),
-      primaryYAxis: NumericAxis(
-        minimum: minValue.toDouble(),
-        maximum: maxValue.toDouble(),
-        axisLine: const AxisLine(width: 0),
-        edgeLabelPlacement: EdgeLabelPlacement.shift,
-        labelFormat: '{value}',
-        labelStyle: widget.yAxisTitleTextStyle,
-        title: (widget.isShowYAxisTitle)
-            ? AxisTitle(
-                text: widget.yAxisTitle,
-                textStyle: widget.yAxisTitleTextStyle,
-              )
-            : const AxisTitle(
-                text: "",
+              primaryYAxis: NumericAxis(
+                minimum: minValue.toDouble(),
+                maximum: maxValue.toDouble(),
+                axisLine: const AxisLine(width: 0),
+                edgeLabelPlacement: EdgeLabelPlacement.shift,
+                labelFormat: '{value}',
+                labelStyle: widget.yAxisTitleTextStyle,
+                title: (widget.isShowYAxisTitle)
+                    ? AxisTitle(
+                        text: widget.yAxisTitle,
+                        textStyle: widget.yAxisTitleTextStyle,
+                      )
+                    : const AxisTitle(
+                        text: "",
+                      ),
+                majorTickLines: const MajorTickLines(size: 0),
+                plotBands: (widget.isShowNormalRangeHint)
+                    ? <PlotBand>[
+                        PlotBand(
+                          start: 21,
+                          end: 36,
+                          color: Colors.grey.withOpacity(0.2),
+                          text: widget.normalRangeHintTitle,
+                          textStyle: widget.normalRangeHintTextStyle,
+                        ),
+                      ]
+                    : [],
               ),
-        majorTickLines: const MajorTickLines(size: 0),
-        plotBands: (widget.isShowNormalRangeHint)
-            ? <PlotBand>[
-                PlotBand(
-                  start: 21,
-                  end: 36,
-                  color: Colors.grey.withOpacity(0.2),
-                  text: widget.normalRangeHintTitle,
-                  textStyle: widget.normalRangeHintTextStyle,
-                ),
-              ]
-            : [],
+              series: _getDefaultSplineSeries(),
+              tooltipBehavior: _tooltipBehavior,
+              loadMoreIndicatorBuilder:
+                  (BuildContext context, ChartSwipeDirection direction) =>
+                      getLoadMoreIndicatorBuilder(context, direction),
+            ),
+          ),
+        ],
       ),
-      series: _getDefaultSplineSeries(),
-      tooltipBehavior: _tooltipBehavior,
-      loadMoreIndicatorBuilder:
-          (BuildContext context, ChartSwipeDirection direction) =>
-              getLoadMoreIndicatorBuilder(context, direction),
     );
   }
 

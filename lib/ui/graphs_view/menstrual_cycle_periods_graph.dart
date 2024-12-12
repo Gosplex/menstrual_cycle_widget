@@ -21,6 +21,9 @@ class MenstrualCyclePeriodsGraph extends StatefulWidget {
   final String otherCycleDaysTitle;
   final Function? onImageDownloadCallback;
   final Function? onPdfDownloadCallback;
+  final EdgeInsetsGeometry? headerPadding;
+  final String? headerTitle;
+  final TextStyle headerTitleTextStyle;
 
   const MenstrualCyclePeriodsGraph(
       {super.key,
@@ -39,7 +42,12 @@ class MenstrualCyclePeriodsGraph extends StatefulWidget {
       this.isShowMoreOptions = false,
       this.otherCycleDaysTitle = Strings.graphCycleOtherDay,
       this.onImageDownloadCallback,
-      this.onPdfDownloadCallback});
+      this.onPdfDownloadCallback,
+      this.headerTitle = Strings.graphCycleTrends,
+      this.headerTitleTextStyle =
+          const TextStyle(color: Colors.black, fontSize: 10),
+      this.headerPadding =
+          const EdgeInsets.symmetric(vertical: 8, horizontal: 16)});
 
   @override
   State<MenstrualCyclePeriodsGraph> createState() =>
@@ -148,67 +156,83 @@ class _MenstrualCyclePeriodsGraphState
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: (isGetData)
-              ? const Text(Strings.noDataFound)
-              : Text(widget.loadingText),
+          child: (isGetData) ? SizedBox.shrink() : Text(widget.loadingText),
         ),
       );
     }
   }
 
   /// Returns the cycle periods chart.
-  SfCartesianChart _buildCyclePeriodsChart() {
-    return SfCartesianChart(
-      key: _chartKey,
-      zoomPanBehavior: _zoomPanBehavior,
-      onZooming: (ZoomPanArgs args) {},
-      onActualRangeChanged: (ActualRangeChangedArgs args) {
-        if (args.orientation == AxisOrientation.horizontal) {
-          if (isLoadMoreView) {
-            args.visibleMin = oldAxisVisibleMin;
-            args.visibleMax = oldAxisVisibleMax;
-          }
-          oldAxisVisibleMin = args.visibleMin as num;
-          oldAxisVisibleMax = args.visibleMax as num;
-          isLoadMoreView = false;
-        }
-      },
-      plotAreaBorderWidth: 0,
-      primaryXAxis: CategoryAxis(
-        majorGridLines: const MajorGridLines(width: 0),
-        //labelRotation: -70,
-        labelStyle: widget.xAxisTitleTextStyle,
-        title: (widget.isShowXAxisTitle)
-            ? AxisTitle(
-                text: widget.xAxisTitle,
-                textStyle: widget.xAxisTitleTextStyle,
-              )
-            : const AxisTitle(
-                text: "",
+  Widget _buildCyclePeriodsChart() {
+    return Container(
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(10)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: widget.headerPadding!,
+            child: Text(
+              widget.headerTitle!,
+              style: widget.headerTitleTextStyle,
+            ),
+          ),
+          Flexible(
+            child: SfCartesianChart(
+              key: _chartKey,
+              zoomPanBehavior: _zoomPanBehavior,
+              onZooming: (ZoomPanArgs args) {},
+              onActualRangeChanged: (ActualRangeChangedArgs args) {
+                if (args.orientation == AxisOrientation.horizontal) {
+                  if (isLoadMoreView) {
+                    args.visibleMin = oldAxisVisibleMin;
+                    args.visibleMax = oldAxisVisibleMax;
+                  }
+                  oldAxisVisibleMin = args.visibleMin as num;
+                  oldAxisVisibleMax = args.visibleMax as num;
+                  isLoadMoreView = false;
+                }
+              },
+              plotAreaBorderWidth: 0,
+              primaryXAxis: CategoryAxis(
+                majorGridLines: const MajorGridLines(width: 0),
+                //labelRotation: -70,
+                labelStyle: widget.xAxisTitleTextStyle,
+                title: (widget.isShowXAxisTitle)
+                    ? AxisTitle(
+                        text: widget.xAxisTitle,
+                        textStyle: widget.xAxisTitleTextStyle,
+                      )
+                    : const AxisTitle(
+                        text: "",
+                      ),
               ),
-      ),
-      primaryYAxis: NumericAxis(
-        //rangePadding: ChartRangePadding.none,
-        axisLine: const AxisLine(width: 0),
-        labelFormat: '{value}',
-        maximum: maxValue.toDouble(),
-        minimum: 1,
-        majorTickLines: const MajorTickLines(size: 0),
-        labelStyle: widget.yAxisTitleTextStyle,
-        title: (widget.isShowYAxisTitle)
-            ? AxisTitle(
-                text: widget.yAxisTitle,
-                textStyle: widget.yAxisTitleTextStyle,
-              )
-            : const AxisTitle(
-                text: "",
+              primaryYAxis: NumericAxis(
+                //rangePadding: ChartRangePadding.none,
+                axisLine: const AxisLine(width: 0),
+                labelFormat: '{value}',
+                maximum: maxValue.toDouble(),
+                minimum: 1,
+                majorTickLines: const MajorTickLines(size: 0),
+                labelStyle: widget.yAxisTitleTextStyle,
+                title: (widget.isShowYAxisTitle)
+                    ? AxisTitle(
+                        text: widget.yAxisTitle,
+                        textStyle: widget.yAxisTitleTextStyle,
+                      )
+                    : const AxisTitle(
+                        text: "",
+                      ),
               ),
+              series: _getStackedColumnSeries(),
+              tooltipBehavior: _tooltipBehavior,
+              loadMoreIndicatorBuilder:
+                  (BuildContext context, ChartSwipeDirection direction) =>
+                      getLoadMoreIndicatorBuilder(context, direction),
+            ),
+          ),
+        ],
       ),
-      series: _getStackedColumnSeries(),
-      tooltipBehavior: _tooltipBehavior,
-      loadMoreIndicatorBuilder:
-          (BuildContext context, ChartSwipeDirection direction) =>
-              getLoadMoreIndicatorBuilder(context, direction),
     );
   }
 
